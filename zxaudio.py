@@ -10,9 +10,16 @@ import subprocess
 
 import ST7789
 
+global imagepath 
+imagepath= '/home/pi/scripts/images'
 mypath = '/home/pi/scripts/images'
 onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 print(onlyfiles)
+number_of_files = len(onlyfiles)
+
+for i in onlyfiles: 
+    print(i) 
+
 
 MESSAGE = "ZX Spectrum Loader"
 
@@ -58,6 +65,19 @@ GPIO.setmode(GPIO.BCM)
 # with a "PULL UP", which weakly pulls the input signal to 3.3V.
 GPIO.setup(BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+# Display correct piture
+
+def select_game(file_id,list_of_images):
+	#print(list_of_images)
+	#print(file_id)
+
+	file_name = list_of_images[file_id]
+	full_path = imagepath + '/' + file_name	
+	#print (file_name)
+	rgba_image = Image.open(full_path)
+	newsize = (240, 240) 
+	rgba_image = rgba_image.resize(newsize)
+	disp.display(rgba_image)
 
 # Set up the button handler
 def handle_button(pin):
@@ -94,25 +114,9 @@ for pin in BUTTONS:
     GPIO.add_event_detect(pin, GPIO.FALLING, handle_button, bouncetime=400)
 
 while True:
-#    x = (time.time() - t_start) * 100
-#    x %= (size_x + disp.width)
-#    draw.rectangle((0, 0, disp.width, 80), (0, 0, 0))
-#    draw.text((int(text_x - x), text_y), MESSAGE, font=font, fill=(255, 255, 255))
-#    disp.display(img)
 
-# Load the svg rendered into a png image.
-	rgba_image = Image.open('manicminer.png')
-	newsize = (240, 240) 
-	rgba_image = rgba_image.resize(newsize)
-
-#print(repr(rgba_image))
-
-#rgba_image.load()
-#image = Image.new("RGB", rgba_image.size, (255, 255, 255))
-#image.paste(rgba_image, mask=rgba_image.split()[3]) # 3 is the alpha channel
-#print(repr(image))
-
-    # TODO: Resize the image requested output size differs from display
-    # image = image.resize((disp.width, disp.height))
-
-	disp.display(rgba_image)
+	select_game(0, onlyfiles)
+	#rgba_image = Image.open('manicminer.png')
+	#newsize = (240, 240) 
+	#rgba_image = rgba_image.resize(newsize)
+	#disp.display(rgba_image)
