@@ -4,7 +4,7 @@
 # version 0.1 alpha - GNU/GPL 2 Jesus Basco 2016
 # modified by Supratim Sanyal - see https://supratim-sanyal.blogspot.com/2019/12/zx-spectrum-tzx-tap-zip-cassette-loader.html
 
-volume="90%"
+volume="130%"
 
 # Set volume of USB sound card to 90%
 echo ====
@@ -20,7 +20,7 @@ es_tzx=$(file -b "$1" | grep -i tzx | wc -l)
 #USE Ramdisk instead of wearing out SD
 tmptzx=/ram0
 if [ $# -ne 1 ]; then
-   echo "ERROR: Hay que poner el archivo TZX/CDT"
+   echo "ERROR: No file provided"
    exit -1
 fi
 if [ -f "$1" ]; then
@@ -34,8 +34,10 @@ if [ -f "$1" ]; then
       echo =================================
       echo
 
-      audacious -pqH ${tmptzx}/temporal.voc
-      #rm ${tmptzx}/temporal.voc
+      #cvlc /ram0/temporal.voc
+      audacious -pqH /ram0/temporal.voc
+      #cvlc /ram0/temporal.voc
+     #rm ${tmptzx}/temporal.voc
    elif [ $es_zip == 1 ]; then
       echo AVISO: El archivo \""$1"\" es un archivo ZIP... descomprimiendo e intentando sacar un archivo CDT/TZX
       mkdir -p ${tmptzx}/tzxtmp
