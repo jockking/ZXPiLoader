@@ -11,13 +11,16 @@ import subprocess
 import ST7789
 
 global imagepath 
+
+current_record = 0
 imagepath= '/home/pi/scripts/images'
 mypath = '/home/pi/scripts/images'
-onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-print(onlyfiles)
-number_of_files = len(onlyfiles)
+roms = '/home/pi/scripts/roms'
+list_of_images = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+print(list_of_images)
+number_of_files = len(list_of_images)
 
-for i in onlyfiles: 
+for i in list_of_images: 
     print(i) 
 
 
@@ -39,19 +42,6 @@ WIDTH = disp.width
 HEIGHT = disp.height
 
 
-img = Image.new('RGB', (WIDTH, HEIGHT), color=(0, 0, 0))
-
-draw = ImageDraw.Draw(img)
-
-font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 30)
-
-size_x, size_y = draw.textsize(MESSAGE, font)
-
-text_x = disp.width
-text_y = (80 - size_y) // 2
-
-t_start = time.time()
-
 # Set up the basics for buttons. The buttons on Pirate Audio are connected to pins 5, 6, 16 and 20
 BUTTONS = [5, 6, 16, 20]
 
@@ -65,11 +55,35 @@ GPIO.setmode(GPIO.BCM)
 # with a "PULL UP", which weakly pulls the input signal to 3.3V.
 GPIO.setup(BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+#Increment and decrement game
+def increment():
+	global current_record
+	global number_of_files
+
+	if (current_record+1) < number_of_files:
+		current_record = current_record+1
+
+def decrement():
+	global current_record
+	global number_of_files
+
+	if (current_record-1) >= 0:
+		current_record = current_record-1
+
+def play_game():
+	global current_record
+	global list_of_images
+	file_name = list_of_images[current_record]
+	rename_file = os.path.splitext(file_name)[0]+'.tzx'
+	full_path = roms + '/' + rename_file	
+	print(full_path)
+	#print os.path.splitext('/home/user/somefile.txt')[0]+'.jpg'
+	subprocess.Popen(r'/home/pi/scripts//playcdt.sh ' + full_path, shell=True)
+
+
 # Display correct piture
 
 def select_game(file_id,list_of_images):
-	#print(list_of_images)
-	#print(file_id)
 
 	file_name = list_of_images[file_id]
 	full_path = imagepath + '/' + file_name	
@@ -85,38 +99,29 @@ def handle_button(pin):
 	print("Button press detected on pin: {} label: {}".format(pin, label))
 
 	if label=='A':
-		#os.system("./playcdt.sh games/manicminer.tzx")
-		#subprocess.Popen(r'./playcdt.sh games/manicminer.tzx',shell = True)
-		subprocess.Popen(r'./playcdt.sh games/manicminer.tzx', shell=True)
+		#Go to previous item
+		decrement()
 
 	if label=='X':
-		# button X - show the colour image, and pause for a second
-		screen.display(image[0])
-		draw_grid(2)
-		screen.display(image[2])
-		time.sleep(60)
-		screen.display(image[3])
+		#Play file
+		play_game()
+		#subprocess.Popen(r'./playcdt.sh games/manicminer.tzx', shell=True)
+		
 
 	if label=='B':
-		# button B - show the logo image, and pause for a second
-		#screen.display(image[1])
-		#time.sleep(2)
-		#screen.display(image[3])
-		os.system('dbus-send --type=method_call --dest=org.mpris.MediaPlayer2.vlc /org/mpris/MediaPlayer2   org.mpris.MediaPlayer2.Player.PlayPause')
+		#Go to next item
+		increment()
 
 	if label=='Y':
-		# button Y - show the blank image, and exit
-		screen.display(image[0])
-		GPIO.cleanup()
-		exit()
+		#Pause / Unpause VLC
+		os.system('dbus-send --type=method_call --dest=org.mpris.MediaPlayer2.vlc /org/mpris/MediaPlayer2   org.mpris.MediaPlayer2.Player.PlayPause')
+
+		
+
 
 for pin in BUTTONS:
     GPIO.add_event_detect(pin, GPIO.FALLING, handle_button, bouncetime=400)
 
 while True:
 
-	select_game(0, onlyfiles)
-	#rgba_image = Image.open('manicminer.png')
-	#newsize = (240, 240) 
-	#rgba_image = rgba_image.resize(newsize)
-	#disp.display(rgba_image)
+	select_game(current_record, list_of_images)
